@@ -1,60 +1,53 @@
 import { createClient } from "@/lib/supabase/client";
 import { NextResponse } from "next/server";
 
-
 const supabase = createClient();
 
 export async function POST(req: Request) {
-
   const { nama, trimester, keluhan } = await req.json();
 
-  // --- Mapping Keluhan → Cluster ---
-  let targetCluster = 0; // default
+  // --- Definisi Kelompok Penyakit per Cluster ---
+  const clusterMap: Record<number, string[]> = {
+    0: ["Hiperemesis gravidarum", "Gangguan pencernaan selama kehamilan"],
+    1: ["Anemia pada kehamilan", "Kehamilan ektopik", "Gangguan tiroid pada kehamilan"],
+    2: ["Preeklampsia", "Retensi cairan", "Edema pada kehamilan"],
+  };
 
-  if (keluhan?.some((k:any) => ["Anemia", "Wajah pucat"].includes(k))) {
-    targetCluster = 0; // cluster zat besi
-  } else if (keluhan?.some((k:any) => ["Mudah lesu", "Cepat lelah", "Penurunan berat badan"].includes(k))) {
-    targetCluster = 1; // cluster energi
-  } else if (keluhan?.some((k:any) => ["Mual", "Muntah", "Kembung", "Nyeri perut", "Timbul bengkak"].includes(k))) {
-    targetCluster = 2; // cluster makanan ringan / rendah garam
-  }
+  // --- Hitung Kemiripan antara keluhan user dan tiap cluster ---
+  const clusterScores = Object.entries(clusterMap).map(([cluster, list]) => {
+    const matches = keluhan.filter((k: string) =>
+      list.some((d) => k.toLowerCase().includes(d.toLowerCase()))
+    ).length;
+    return { cluster: Number(cluster), score: matches };
+  });
 
-  // --- Query ke Supabase ---
-  const { data } = await supabase
+  // --- Tentukan cluster dengan nilai kecocokan tertinggi ---
+  const bestCluster =
+    clusterScores.sort((a, b) => b.score - a.score)[0]?.cluster ?? 0;
+
+  // --- Query ke Supabase berdasarkan hasil cluster terbaik ---
+  const { data, error } = await supabase
     .from("clusters")
     .select("*")
     .eq("trimester", trimester.toString())
-    .eq("cluster", targetCluster);
+    .eq("cluster", bestCluster);
 
-
-  // --- Kelompokkan menu berdasarkan waktu ---
-  // const rekomendasi = {
-  //   pagi: (data ?? []).find((row) => row.waktu.toLowerCase() === "pagi")?.menu || "Tidak ada",
-  //   siang: (data ?? []).find((row) => row.waktu.toLowerCase() === "siang")?.menu || "Tidak ada",
-  //   malam: (data ?? []).find((row) => row.waktu.toLowerCase() === "malam")?.menu || "Tidak ada",
-  //   snack: (data ?? []).find((row) => row.waktu.toLowerCase() === "snack")?.menu || "Tidak ada",
-  // };
-  const grouped = (data ?? []).reduce((acc, item) => {
-  if (!acc[item.waktu]) {
-    acc[item.waktu] = [];
+  if (error) {
+    console.error("Error fetching data:", error);
   }
-  acc[item.waktu].push(item);
-  return acc;
+
+  // --- Kelompokkan hasil berdasarkan waktu makan (misal: pagi, siang, malam) ---
+  const grouped = (data ?? []).reduce((acc: any, item: any) => {
+    if (!acc[item.waktu]) acc[item.waktu] = [];
+    acc[item.waktu].push(item);
+    return acc;
   }, {});
 
   return NextResponse.json({
     nama,
     trimester,
     keluhan,
-    cluster: targetCluster,
+    cluster: bestCluster,
     rekomendasi: grouped,
   });
-
-  // return (JSON.stringify({
-  //   nama,
-  //   trimester,
-  //   keluhan,
-  //   cluster: targetCluster,
-  //   rekomendasi: grouped,
-  // }));
 }
