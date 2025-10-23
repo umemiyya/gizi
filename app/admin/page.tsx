@@ -1,155 +1,184 @@
 'use client';
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useState } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from '@/components/ui/button';
+import { use, useEffect, useState } from 'react';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Label } from '@/components/ui/label';
+import { createClient } from '@/lib/supabase/client';
 
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RekomendasiTable } from "./components/rekomendasi-table";
 
-export default function AdminPage() {
-  const [formData, setFormData] = useState<any>({
-    nama: "",
-    trimester: "",
-    keluhan: [],
-  });
+const penyakitList = [
+  {
+    nama_penyakit: "Anemia pada kehamilan",
+    gejala: ["Mudah lesu / cepat lelah", "Wajah pucat", "Pusing", "Anemia", "Kulit kering"],
+  },
+  {
+    nama_penyakit: "Hiperemesis gravidarum",
+    gejala: ["Mual / muntah berat", "Penurunan berat badan", "Lemas", "Dehidrasi", "Pusing"],
+  },
+  {
+    nama_penyakit: "Preeklampsia",
+    gejala: ["Peningkatan berat badan mendadak", "Timbul bengkak (edema)", "Pusing", "Nyeri perut bagian atas", "Gangguan penglihatan"],
+  },
+  {
+    nama_penyakit: "Kehamilan ektopik",
+    gejala: ["Nyeri perut tajam atau menusuk", "Pusing", "Wajah pucat", "Lemas", "Perdarahan tidak normal"],
+  },
+  {
+    nama_penyakit: "Gangguan pencernaan selama kehamilan",
+    gejala: ["Kembung", "Nyeri perut ringan", "Mual", "Rasa penuh di perut", "Sulit buang angin"],
+  },
+  {
+    nama_penyakit: "Gangguan tiroid pada kehamilan",
+    gejala: ["Kulit kering", "Mudah lelah", "Penurunan atau peningkatan berat badan", "Pusing", "Wajah pucat"],
+  },
+];
 
-  const [loading, setLoading] = useState(false);
-  const [rekomendasi, setRekomendasi] = useState<any>(null);
+export default function BlogPostPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = use(params);
+  const supabase = createClient();
 
-  // 🔹 Handler untuk nama
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const [gejalas, setGejalas] = useState<any[]>([]);
 
-  // 🔹 Handler untuk checkbox keluhan
-  const handleCheckboxChange = (value: string, checked: boolean) => {
-    let newKeluhan = [...formData.keluhan];
-    if (checked) {
-      newKeluhan.push(value);
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data, error: dataError } = await supabase
+        .from('gejala')
+        .select('*');
+
+      if (dataError) {
+        console.error('Error fetching related gejala:', dataError);
+        return;
+      }
+
+      const filteredData = (data || []).filter((item) => item.gejala !== '');
+      setGejalas(filteredData);
+    };
+    fetchData();
+  }, [id, supabase]);
+
+  // Fungsi update ke database
+  const handleSave = async (itemId: string, penyakit: string) => {
+    const { error } = await supabase
+      .from('gejala')
+      .update({
+        penyakit: penyakit,
+        status: 'Terverifikasi',
+      })
+      .eq('id', itemId);
+
+    if (error) {
+      console.error('Gagal update:', error);
+      alert('Gagal menyimpan perubahan!');
     } else {
-      newKeluhan = newKeluhan.filter((k) => k !== value);
-    }
-    setFormData({ ...formData, keluhan: newKeluhan });
-  };
-
-  // 🔹 Handler submit ke API
-  const handleSubmit = async () => {
-    setLoading(true);
-    console.log("Form Data Submitted:", formData);
-    try {
-      const res = await fetch("/api/clusters", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const data = await res.json();
-      console.log("Response from API:", data);
-      setRekomendasi(data);
-    } catch (err) {
-      console.error("Error:", err);
-    } finally {
-      setLoading(false);
+      alert('Berhasil disimpan dan diverifikasi!');
+      // Refresh tampilan
+      setGejalas((prev) =>
+        prev.map((item) =>
+          item.id === itemId ? { ...item, penyakit, status: 'Terverifikasi' } : item
+        )
+      );
     }
   };
 
   return (
-    <Card className="max-w-4xl w-full m-auto shadow-none border-green-200">
-      <CardHeader>
-        <h2 className="text-md font-semibold">Form Input Data</h2>
-      </CardHeader>
-      <CardContent>
-        <div className="w-full flex flex-col gap-4">
-          {/* Nama */}
-          <div className="flex flex-col gap-2 mt-4">
-            <Label>Nama Lengkap</Label>
-            <Input
-              value={formData.nama}
-              name="nama"
-              onChange={handleInputChange}
-              placeholder="Masukkan nama!"
-            />
-          </div>
+    <div>
+      <div className="mt-8">
+        <Label className="font-semibold text-green-700 mb-2 block">
+          Hasil Data Pasien:
+        </Label>
 
-          {/* Trimester */}
-          <div className="flex flex-col gap-2 mt-4">
-            <Label>Trimester</Label>
-            <Select
-              value={formData.trimester}
-              onValueChange={(value) =>
-                setFormData({ ...formData, trimester: value })
-              }
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select a trimester" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Trimester</SelectLabel>
-                  <SelectItem value="pertama">Pertama</SelectItem>
-                  <SelectItem value="kedua">Kedua</SelectItem>
-                  <SelectItem value="ketiga">Ketiga</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Keluhan */}
-          <div className="flex flex-col gap-2 mt-4">
-            <Label>Keluhan</Label>
-            <p className="text-sm py-2 text-muted-foreground">
-              Pilih keluhan yang anda rasakan!
-            </p>
-            <div className="flex flex-col gap-6">
-              {[
-                "Mudah lesu / Cepat lelah",
-                "Penurunan berat badan",
-                "Peningkatan berat badan",
-                "Timbul bengkak (edema)",
-                "Anemia",
-                "Pusing",
-                "Kembung",
-                "Mual / Muntah",
-                "Kulit kering",
-                "Wajah pucat",
-                "Nyeri perut",
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center gap-3">
-                  <Checkbox
-                    id={item}
-                    checked={formData.keluhan.includes(item)}
-                    onCheckedChange={(checked) =>
-                      handleCheckboxChange(item, Boolean(checked))
-                    }
-                  />
-                  <Label htmlFor={item}>{item}</Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Submit */}
-          <div className="border-t py-4">
-            <Button onClick={handleSubmit} disabled={loading}>
-              {loading ? "Loading..." : "Berikan Rekomendasi"}
-            </Button>
-          </div>
-
-          {/* Hasil Rekomendasi */}
-          {rekomendasi && (<RekomendasiTable rekomendasi={rekomendasi.rekomendasi} />)}
-        </div>
-      </CardContent>
-    </Card>
+        <Table>
+          <TableCaption>
+            Data hasil rekomendasi berdasarkan input gejala
+          </TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>Trimester</TableHead>
+              <TableHead>Gejala</TableHead>
+              <TableHead>Penyakit</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>#</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {gejalas.length > 0 ? (
+              gejalas.map((item, index) => (
+                <TableRow key={item.id}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell className="capitalize">
+                    {item.trimester || '-'}
+                  </TableCell>
+                  <TableCell>{item.gejala || '-'}</TableCell>
+                  <TableCell>
+                    <Select
+                      value={item.penyakit || ''}
+                      onValueChange={(val) =>
+                        setGejalas((prev) =>
+                          prev.map((g) =>
+                            g.id === item.id ? { ...g, penyakit: val } : g
+                          )
+                        )
+                      }
+                      disabled={item.status === 'Terverifikasi'}
+                    >
+                      <SelectTrigger className="w-[220px]">
+                        <SelectValue placeholder="Pilih penyakit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {penyakitList.map((p) => (
+                          <SelectItem key={p.nama_penyakit} value={p.nama_penyakit}>
+                            {p.nama_penyakit}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>{item.status || '-'}</TableCell>
+                  <TableCell>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={
+                        item.status === 'Terverifikasi' || !item.penyakit
+                      }
+                      onClick={() => handleSave(item.id, item.penyakit)}
+                    >
+                      Simpan
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-gray-500">
+                  Tidak ada data gejala ditemukan.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
   );
 }

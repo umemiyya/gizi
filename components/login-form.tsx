@@ -39,10 +39,23 @@ export function LoginForm({
       });
       if (error) throw error;
       // Update this route to redirect to an authenticated route. The user already has an active session.
-      if(email === "amiright0zz@gmail.com"){
+       if(email === "amiright0zz@gmail.com"){
         router.push("/admin");
       } else {
-        router.push("/user");
+        // get userid from table users where email = email
+        const { data } = await supabase
+          .from("gejala")
+          .select("id")
+          .eq("nama", email.split("@")[0])
+          .eq("gejala", "" )
+          .single();
+
+          console.log(data)
+        if (data && data.id) {
+          router.push(`/user/${data.id}`);
+        } else {
+          setError("User not found.");
+        }
       }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");

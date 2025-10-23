@@ -39,6 +39,23 @@ export function SignUpForm({
       return;
     }
 
+    const userId = Math.floor(Math.random() * (49 - 7 + 1)) + 7;
+
+    const { data, error } = await supabase
+      .from('gejala')
+      .insert([
+        {id: userId, nama: email.split("@")[0], gejala: '', status: '', penyakit: ''},
+      ])
+      .select();
+
+    console.log(data, error);
+
+    if(error) {
+      setError(error.message);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -47,7 +64,8 @@ export function SignUpForm({
           emailRedirectTo: `${window.location.origin}/protected`,
         },
       });
-      if (error) throw error;
+      if (error) throw error; 
+
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
