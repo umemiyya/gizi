@@ -25,7 +25,7 @@ export default function BlogPostPage({
   const { id } = use(params);
   const supabase = createClient();
 
-  const [nama, setNama] = useState<string>('');
+  const [, setNama] = useState<string>('');
   const [gejalas, setGejalas] = useState<any[]>([]);
   const [rekomendasi, setRekomendasi] = useState<Record<number, any>>({});
   const [expandedRow, setExpandedRow] = useState<number | null>(null);

@@ -21,32 +21,6 @@ import { createClient } from "@/lib/supabase/client";
 import { redirect } from "next/navigation";
 
 // 🔹 Daftar penyakit (masih disimpan jika dibutuhkan nanti)
-const penyakitList = [
-  {
-    nama_penyakit: "Anemia pada kehamilan",
-    gejala: ["Mudah lesu / cepat lelah", "Wajah pucat", "Pusing", "Anemia", "Kulit kering"],
-  },
-  {
-    nama_penyakit: "Hiperemesis gravidarum",
-    gejala: ["Mual / muntah berat", "Penurunan berat badan", "Lemas", "Dehidrasi", "Pusing"],
-  },
-  {
-    nama_penyakit: "Preeklampsia",
-    gejala: ["Peningkatan berat badan mendadak", "Timbul bengkak (edema)", "Pusing", "Nyeri perut bagian atas", "Gangguan penglihatan"],
-  },
-  {
-    nama_penyakit: "Kehamilan ektopik",
-    gejala: ["Nyeri perut tajam atau menusuk", "Pusing", "Wajah pucat", "Lemas", "Perdarahan tidak normal"],
-  },
-  {
-    nama_penyakit: "Gangguan pencernaan selama kehamilan",
-    gejala: ["Kembung", "Nyeri perut ringan", "Mual", "Rasa penuh di perut", "Sulit buang angin"],
-  },
-  {
-    nama_penyakit: "Gangguan tiroid pada kehamilan",
-    gejala: ["Kulit kering", "Mudah lelah", "Penurunan atau peningkatan berat badan", "Pusing", "Wajah pucat"],
-  },
-];
 
 // 🔹 18 gejala unik hasil penyederhanaan
 const semuaGejala = [
@@ -137,7 +111,7 @@ export default function BlogPostPage({
         penyakit: "",
       };
 
-      const { data, error: insertError } = await supabase
+      const { error: insertError } = await supabase
         .from("gejala")
         .insert([newData])
         .select();
