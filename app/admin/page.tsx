@@ -25,34 +25,154 @@ import {
 const penyakitList = [
   {
     nama_penyakit: "Anemia pada kehamilan",
-    gejala: ["Mudah lesu / cepat lelah", "Wajah pucat", "Pusing", "Anemia", "Kulit kering"],
+    gejala: [
+      "Mudah lesu / cepat lelah",
+      "Wajah pucat",
+      "Pusing",
+      "Anemia",
+      "Kulit kering",
+      "Jantung berdebar",
+      "Sesak napas ringan",
+    ],
   },
   {
     nama_penyakit: "Hiperemesis gravidarum",
-    gejala: ["Mual / muntah berat", "Penurunan berat badan", "Lemas", "Dehidrasi", "Pusing"],
+    gejala: [
+      "Mual / muntah berat",
+      "Penurunan berat badan",
+      "Lemas",
+      "Dehidrasi",
+      "Pusing",
+      "Tidak nafsu makan",
+      "Mulut terasa kering",
+    ],
   },
   {
     nama_penyakit: "Preeklampsia",
-    gejala: ["Peningkatan berat badan mendadak", "Timbul bengkak (edema)", "Pusing", "Nyeri perut bagian atas", "Gangguan penglihatan"],
+    gejala: [
+      "Peningkatan berat badan mendadak",
+      "Timbul bengkak (edema)",
+      "Pusing",
+      "Nyeri perut bagian atas",
+      "Gangguan penglihatan",
+      "Tekanan darah tinggi",
+      "Sakit kepala berat",
+    ],
   },
   {
     nama_penyakit: "Kehamilan ektopik",
-    gejala: ["Nyeri perut tajam atau menusuk", "Pusing", "Wajah pucat", "Lemas", "Perdarahan tidak normal"],
+    gejala: [
+      "Nyeri perut tajam atau menusuk",
+      "Pusing",
+      "Wajah pucat",
+      "Lemas",
+      "Perdarahan tidak normal",
+      "Nyeri bahu",
+      "Pingsan atau hampir pingsan",
+    ],
   },
   {
     nama_penyakit: "Gangguan pencernaan selama kehamilan",
-    gejala: ["Kembung", "Nyeri perut ringan", "Mual", "Rasa penuh di perut", "Sulit buang angin"],
+    gejala: [
+      "Kembung",
+      "Nyeri perut ringan",
+      "Mual",
+      "Rasa penuh di perut",
+      "Sulit buang angin",
+      "Sering bersendawa",
+      "Rasa panas di dada (heartburn)",
+    ],
   },
   {
     nama_penyakit: "Gangguan tiroid pada kehamilan",
-    gejala: ["Kulit kering", "Mudah lelah", "Penurunan atau peningkatan berat badan", "Pusing", "Wajah pucat"],
+    gejala: [
+      "Kulit kering",
+      "Mudah lelah",
+      "Penurunan atau peningkatan berat badan",
+      "Pusing",
+      "Wajah pucat",
+      "Detak jantung cepat atau lambat",
+      "Tangan gemetar",
+    ],
+  },
+  {
+    nama_penyakit: "Infeksi saluran kemih (ISK) pada kehamilan",
+    gejala: [
+      "Sering buang air kecil",
+      "Rasa nyeri atau panas saat buang air kecil",
+      "Demam ringan",
+      "Perut bagian bawah terasa nyeri",
+      "Urine berbau tajam",
+      "Urine keruh atau bercampur darah",
+    ],
+  },
+  {
+    nama_penyakit: "Diabetes gestasional",
+    gejala: [
+      "Sering haus",
+      "Sering buang air kecil",
+      "Lelah berlebihan",
+      "Penglihatan kabur",
+      "Mual ringan",
+      "Berat badan meningkat cepat",
+    ],
+  },
+  {
+    nama_penyakit: "Infeksi jamur vagina (Candidiasis)",
+    gejala: [
+      "Gatal di area vagina",
+      "Keputihan kental seperti susu",
+      "Rasa terbakar saat buang air kecil",
+      "Kemerahan di area intim",
+      "Bau tidak sedap dari vagina",
+    ],
+  },
+  {
+    nama_penyakit: "Hipertensi gestasional",
+    gejala: [
+      "Tekanan darah tinggi",
+      "Sakit kepala terus menerus",
+      "Penglihatan kabur",
+      "Pembengkakan pada tangan dan kaki",
+      "Nyeri di sekitar rusuk atau perut bagian atas",
+    ],
+  },
+  {
+    nama_penyakit: "Plasenta previa",
+    gejala: [
+      "Perdarahan tanpa nyeri pada trimester ketiga",
+      "Kontraksi ringan",
+      "Rasa tertekan di panggul",
+      "Anemia akibat kehilangan darah",
+    ],
+  },
+  {
+    nama_penyakit: "Solusio plasenta",
+    gejala: [
+      "Nyeri perut hebat",
+      "Perdarahan vagina",
+      "Rahim terasa keras",
+      "Gerakan janin berkurang",
+      "Syok atau tekanan darah rendah",
+    ],
+  },
+  {
+    nama_penyakit: "Infeksi TORCH",
+    gejala: [
+      "Demam ringan",
+      "Ruam di kulit",
+      "Pembengkakan kelenjar getah bening",
+      "Sakit tenggorokan",
+      "Nyeri otot",
+    ],
   },
 ];
+
 
 export default function BlogPostPage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
   const supabase = createClient();
@@ -114,7 +234,9 @@ export default function BlogPostPage({
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
+              {/* 🔹 Tambahkan kolom usia */}
               <TableHead>Trimester</TableHead>
+              <TableHead>Usia</TableHead>
               <TableHead>Gejala</TableHead>
               <TableHead>Penyakit</TableHead>
               <TableHead>Status</TableHead>
@@ -126,10 +248,27 @@ export default function BlogPostPage({
               gejalas.map((item, index) => (
                 <TableRow key={item.id}>
                   <TableCell>{index + 1}</TableCell>
+
+                  {/* 🔹 Menampilkan usia */}
+
                   <TableCell className="capitalize">
                     {item.trimester || '-'}
                   </TableCell>
-                  <TableCell>{item.gejala || '-'}</TableCell>
+
+                  <TableCell>{item.usia || '-'}</TableCell>
+                  {/* 🔹 Gejala sebagai daftar <ul> */}
+                  <TableCell>
+                    {item.gejala ? (
+                      <ul className="list-disc ml-4">
+                        {item.gejala.split(',').map((g: string, i: number) => (
+                          <li key={i}>{g.trim()}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      '-'
+                    )}
+                  </TableCell>
+
                   <TableCell>
                     <Select
                       value={item.penyakit || ''}
@@ -154,7 +293,9 @@ export default function BlogPostPage({
                       </SelectContent>
                     </Select>
                   </TableCell>
+
                   <TableCell>{item.status || '-'}</TableCell>
+
                   <TableCell>
                     <Button
                       size="sm"

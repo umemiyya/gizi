@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import {use} from "react"
+import { use } from "react";
 import {
   Select,
   SelectContent,
@@ -20,7 +20,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { redirect } from "next/navigation";
 
-// 🔹 Daftar penyakit & gejala (digunakan hanya untuk daftar gejala unik)
+// 🔹 Daftar penyakit (masih disimpan jika dibutuhkan nanti)
 const penyakitList = [
   {
     nama_penyakit: "Anemia pada kehamilan",
@@ -48,6 +48,28 @@ const penyakitList = [
   },
 ];
 
+// 🔹 18 gejala unik hasil penyederhanaan
+const semuaGejala = [
+  "Mudah lesu / cepat lelah",
+  "Pusing",
+  "Kulit kering",
+  "Penurunan atau peningkatan berat badan",
+  "Dehidrasi",
+  "Timbul bengkak (edema)",
+  "Gangguan penglihatan",
+  "Perdarahan tidak normal",
+  "Nyeri perut ringan",
+  "Rasa penuh di perut",
+  "Wajah pucat",
+  "Anemia",
+  "Mual / muntah berat",
+  "Lemas",
+  "Nyeri perut bagian atas",
+  "Nyeri perut tajam atau menusuk",
+  "Kembung",
+  "Sulit buang angin",
+];
+
 export default function BlogPostPage({
   params,
 }: {
@@ -55,23 +77,17 @@ export default function BlogPostPage({
 }) {
   const { id } = use(params);
   const supabase = createClient();
+
   const [formData, setFormData] = useState<any>({
     nama: "",
+    usia: "",
     trimester: "",
     gejala: [],
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
-
   const [nama, setNama] = useState<string>("");
-
-  // 🔹 Semua gejala unik dari seluruh penyakit
-  const semuaGejala = useMemo(() => {
-    const all: string[] = [];
-    penyakitList.forEach((p) => all.push(...p.gejala));
-    return [...new Set(all)];
-  }, []);
 
   // 🔹 Handle input teks
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,8 +107,6 @@ export default function BlogPostPage({
     setError("");
     setLoading(true);
 
-    console.log(formData)
-
     if (!formData.trimester) {
       setError("Silakan pilih trimester terlebih dahulu.");
       setLoading(false);
@@ -104,21 +118,24 @@ export default function BlogPostPage({
       return;
     }
 
+    if (!formData.usia || Number(formData.usia) <= 0) {
+      setError("Silakan masukkan usia yang valid.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Ambil data user aktif dari Supabase Auth
       const userId = Math.floor(Math.random() * (1000 - 7 + 1)) + 7;
 
-      // Siapkan data untuk tabel gejala
       const newData = {
         id: userId,
         nama: nama,
+        usia: formData.usia,
         trimester: formData.trimester,
         gejala: formData.gejala.join(", "),
         status: "Belum diverifikasi",
         penyakit: "",
       };
-
-      console.log("📤 Menyimpan data ke tabel gejala:", newData);
 
       const { data, error: insertError } = await supabase
         .from("gejala")
@@ -129,10 +146,8 @@ export default function BlogPostPage({
         console.error(insertError);
         setError("Gagal menambahkan data ke tabel gejala.");
       } else {
-        console.log("✅ Data berhasil disimpan:", data);
-        alert("Data berhasil disimpan ke tabel gejala!");
-        // Reset form
-        setFormData({ nama: "", trimester: "", gejala: [] });
+        alert("✅ Data berhasil disimpan ke tabel gejala!");
+        setFormData({ nama: "", usia: "", trimester: "", gejala: [] });
       }
     } catch (err) {
       console.error("Error:", err);
@@ -142,16 +157,16 @@ export default function BlogPostPage({
     }
   };
 
-  // fetch from api /api/recommendations?userId={id}
+  // 🔹 Ambil nama user dari tabel gejala berdasarkan id
   useEffect(() => {
     const fetchData = async () => {
       const { data: gejala } = await supabase
-        .from('gejala')
+        .from("gejala")
         .select("*")
-        .eq('id', id);
+        .eq("id", id);
 
-      if (gejala && gejala.length > 0 ) {
-        setNama(gejala[0].nama)
+      if (gejala && gejala.length > 0) {
+        setNama(gejala[0].nama);
       }
     };
     fetchData();
@@ -173,6 +188,18 @@ export default function BlogPostPage({
               name="nama"
               onChange={handleInputChange}
               placeholder="Masukkan nama!"
+            />
+          </div>
+
+          {/* Usia */}
+          <div className="flex flex-col gap-2 mt-4">
+            <Label>Usia</Label>
+            <Input
+              type="number"
+              name="usia"
+              value={formData.usia}
+              onChange={handleInputChange}
+              placeholder="Masukkan usia (dalam tahun)"
             />
           </div>
 
@@ -205,13 +232,15 @@ export default function BlogPostPage({
             <p className="text-sm text-muted-foreground">
               Centang semua gejala yang sesuai dengan kondisi pasien.
             </p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {semuaGejala.map((g, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <Checkbox
                     id={g}
                     checked={formData.gejala.includes(g)}
-                    onCheckedChange={(checked) => handleGejalaChange(g, Boolean(checked))}
+                    onCheckedChange={(checked) =>
+                      handleGejalaChange(g, Boolean(checked))
+                    }
                   />
                   <Label htmlFor={g}>{g}</Label>
                 </div>

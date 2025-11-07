@@ -46,8 +46,6 @@ export default function BlogPostPage({
       if (gejala && gejala.length > 0) {
         setNama(gejala[0].nama);
 
-        console.log(nama);
-
         const { data, error: dataError } = await supabase
           .from('gejala')
           .select('*')
@@ -133,7 +131,9 @@ export default function BlogPostPage({
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
+              {/* 🔹 Tambahkan kolom usia */}
               <TableHead>Trimester</TableHead>
+              <TableHead>Usia</TableHead>
               <TableHead>Gejala</TableHead>
               <TableHead>Penyakit</TableHead>
               <TableHead>Status</TableHead>
@@ -146,9 +146,11 @@ export default function BlogPostPage({
                 <React.Fragment key={item.id}>
                   <TableRow>
                     <TableCell>{index + 1}</TableCell>
+                    {/* 🔹 Tampilkan usia dari database */}
                     <TableCell className="capitalize">
                       {item.trimester || '-'}
                     </TableCell>
+                    <TableCell>{item.usia || '-'}</TableCell>
                     <TableCell>{item.gejala || '-'}</TableCell>
                     <TableCell>{item.penyakit || '-'}</TableCell>
                     <TableCell>{item.status || '-'}</TableCell>
@@ -170,7 +172,7 @@ export default function BlogPostPage({
 
                   {expandedRow === item.id && (
                     <TableRow key={`${item.id}-expanded`}>
-                      <TableCell colSpan={6}>
+                      <TableCell colSpan={7}>
                         {loadingId === item.id ? (
                           <p className="text-gray-500">
                             Memuat hasil rekomendasi...
