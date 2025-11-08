@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -82,6 +83,7 @@ export function RekomendasiTable({ rekomendasi }: { rekomendasi: any }) {
           <TableRow>
             <TableHead className="w-[100px]">Waktu</TableHead>
             <TableHead>Menu</TableHead>
+            <TableHead>Waktu</TableHead>
             <TableHead>Kalori (kkal)</TableHead>
             <TableHead>Protein (g)</TableHead>
             <TableHead>Karbo (g)</TableHead>
@@ -97,7 +99,8 @@ export function RekomendasiTable({ rekomendasi }: { rekomendasi: any }) {
                 <TableCell className="font-medium">
                   {idx === 0 ? waktu : ""}
                 </TableCell>
-                <TableCell>{item.menu}</TableCell>
+                <TableCell>{item.menu} <Badge className={item.jenis === "Makanan Utama" ? "bg-green-500" : "bg-yellow-500"}>{item.jenis}</Badge></TableCell>
+                <TableCell>{item.jam.split('�').join('-')}</TableCell>
                 <TableCell>{item.kalori}</TableCell>
                 <TableCell>{item.protein}</TableCell>
                 <TableCell>{item.karbo}</TableCell>

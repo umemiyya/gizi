@@ -96,6 +96,8 @@ export default function BlogPostPage({
 
       const data = await res.json();
 
+      console.log(data);
+
       setRekomendasi((prev) => ({
         ...prev,
         [itemId]: data,
